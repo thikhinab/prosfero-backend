@@ -6,6 +6,7 @@ let User = require('../models/user')
 
 // Register User
 router.route('/register').post( async (req, res) => {
+    const rand = 23
     const firstName = req.body.firstName
     const lastName = req.body.lastName
     const username = req.body.username
