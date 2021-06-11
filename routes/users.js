@@ -1,7 +1,9 @@
 const router =  require('express').Router()
-const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
-let User = require('../models/user')
+let UserModel = require('../models/user')
+const passport = require('passport')
+const { request } = require('express')
+require('../auth/auth')
 
 
 // Register User
@@ -35,7 +37,7 @@ router.route('/register').post( async (req, res) => {
         }
     }
 
-    res.status('200').json({status: 'ok'})
+    res.status('200').json({message: 'Account successfully created'})
 })
 
 
@@ -65,36 +67,40 @@ router.route('/register').post( async (req, res) => {
 }) */
 
 
-router.route('/login').post(
-    async (req, res, next) => {
-      passport.authenticate(
-        'login',
+router.route('/login').post( async (req, res) => {
+      passport.authenticate('login',
         async (err, user, info) => {
           try {
-            if (err || !user) {
-              const error = new Error('An error occurred.');
-  
-              return next(error);
+            if (err) {
+              
+              return res.json({error: err});
+            } else if (!user) {
+              return res.json({error: 'Invalid username or password'})
             }
   
             req.login(
               user,
               { session: false },
               async (error) => {
-                if (error) return next(error);
+                if (error) return res.json(error);
   
                 const body = { id: user._id, username: user.username };
-                const token = jwt.sign({ user: body }, process.env.JWT_SECRET);
+                const token = jwt.sign({ user: body }, process.env.JWT_SECRET, {expiresIn: '1d'});
   
-                return res.json({ token });
+                return res.json({ message: info.message, token });
               }
             );
           } catch (error) {
-            return next(error);
+            return res.json(error);
           }
         }
-      )(req, res, next);
+      )(req, res);
     }
   );
+
+
+router.get('/profile', passport.authenticate('jwt', { session: false }), async (req, res) => {
+  res.json({user: req.user})
+})
 
 module.exports = router

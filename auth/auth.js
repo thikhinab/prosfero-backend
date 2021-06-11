@@ -8,12 +8,12 @@ const ExtractJWT = require('passport-jwt').ExtractJwt
 passport.use(
     new JWTstrategy(
         {
-            secretOrKey: 'token',
-            jwtFromRequest: ExtractJWT.fromBodyField('token')
+            secretOrKey: process.env.JWT_SECRET,
+            jwtFromRequest: ExtractJWT.fromAuthHeaderAsBearerToken('token')
         },
-        async (token, done) => {
+        async (jwtPayload, done) => {
             try{
-                return done(null, token.user)
+                return done(null, jwtPayload.user)
             } catch (err) {
                 done(error)
             }
@@ -25,14 +25,11 @@ passport.use(
 passport.use(
     'login',
     new localStrategy(
-      {
-        usernameField: 'username',
-        passwordField: 'password'
-      },
-      async (email, password, done) => {
+      async (username, password, done) => {
         try {
-          const user = await UserModel.findOne({ email });
-  
+          
+          const user = await UserModel.findOne({ username: username });
+          
           if (!user) {
             return done(null, false, { message: 'User not found' });
           }
