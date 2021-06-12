@@ -42,31 +42,6 @@ router.route('/register').post( async (req, res) => {
 
 
 // login
-/* router.route('/login').post(async (req, res) => {
-
-    const { username, password } = req.body
-
-    const user = await User.findOne({username}).lean()
-
-    if (!user) {
-        return res.json({ status: 'error', error: 'Invalid username/password'})
-    }
-
-    if (await bcrypt.compare(password, user.password)) {
-
-        const token = jwt.sign({
-            id: user._id, 
-            username: user.username},
-            process.env.JWT_SECRET)
-
-        return res.json({status: 'ok', token: token})
-    }
-
-
-    return res.json({ status: 'error', error: 'Invalid username/password'})
-}) */
-
-
 router.route('/login').post( async (req, res) => {
       passport.authenticate('login',
         async (err, user, info) => {
@@ -85,7 +60,8 @@ router.route('/login').post( async (req, res) => {
                 if (error) return res.json(error);
   
                 const body = { id: user._id, username: user.username };
-                const token = jwt.sign({ user: body }, process.env.JWT_SECRET, {expiresIn: '1d'});
+                // Consider adding expiration
+                const token = jwt.sign({ user: body }, process.env.JWT_SECRET);
   
                 return res.json({ message: info.message, token });
               }
