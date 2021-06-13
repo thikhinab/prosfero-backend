@@ -1,6 +1,9 @@
 const express = require('express')
 const mongoose = require('mongoose')
 const cors = require('cors')
+const helmet = require('helmet')
+const morgan = require('morgan')
+const passport = require('passport')
 
 require('dotenv').config()
 
@@ -13,6 +16,8 @@ require('./auth/auth')
 
 // Middleware
 app.use(express.json())
+app.use(helmet())
+app.use(morgan('common'))
 
 // CorsOptions
 var corsOptions = {
@@ -37,6 +42,9 @@ connection.once('open', () => {
 // Routes used
 const usersRouter = require('./routes/users')
 app.use('/api/v1/users', usersRouter)
+
+const profileRouter = require('./routes/profile')
+app.use('/api/v1/profile', passport.authenticate('jwt', { session: false }), profileRouter)
 
 app.listen(PORT, () => {
     console.log(`Server is running on port: ${PORT}`)

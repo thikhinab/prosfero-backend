@@ -1,6 +1,6 @@
 const router =  require('express').Router()
 const jwt = require('jsonwebtoken')
-let UserModel = require('../models/user')
+let UserModel = require('../models/User')
 const passport = require('passport')
 const { request } = require('express')
 require('../auth/auth')
@@ -15,7 +15,7 @@ router.route('/register').post( async (req, res) => {
     const password = req.body.password
 
     try {
-        const response = await User.create({
+        const response = await UserModel.create({
             firstName,
             lastName,
             username,
@@ -41,7 +41,7 @@ router.route('/register').post( async (req, res) => {
 })
 
 
-// login
+// Login
 router.route('/login').post( async (req, res) => {
       passport.authenticate('login',
         async (err, user, info) => {
@@ -74,9 +74,5 @@ router.route('/login').post( async (req, res) => {
     }
   );
 
-
-router.get('/profile', passport.authenticate('jwt', { session: false }), async (req, res) => {
-  res.json({user: req.user})
-})
 
 module.exports = router

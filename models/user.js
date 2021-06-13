@@ -29,6 +29,18 @@ const userSchema = new mongoose.Schema(
         password: {
             type: String,
             required: true
+        }, 
+        profilePicture: {
+            type: String,
+            default: ""
+        },
+        achievementLevel: {
+            type: String,
+            default: "Newbie"
+        },
+        isAdmin: {
+            type: Boolean,
+            dafault: false
         }
 }, {
         collection: 'users',
