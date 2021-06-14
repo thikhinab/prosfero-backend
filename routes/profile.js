@@ -8,12 +8,41 @@ require('../auth/auth')
 router.get('/', async (req, res) => {
 
     try {
-        const user = await UserModel.findById(req.user.id).lean()
-        res.json(user)
+        const user = await UserModel.findById(req.user.id)
+        const {password, updatedAt, ...data} = user._doc
+        res.json(data)
     } catch (error) {
         console.log(error)
         res.status(404).json({message: "User not found"})
     }
   })
+
+
+// Udpate user profile
+router.put('/', async (req, res) => {
+
+    try {
+        const user = await UserModel.findByIdAndUpdate(req.user.id, {
+            $set: req.body
+        })
+        res.status(200).json('Account has been updated')
+    } catch (err) {
+        console.log(error)
+        res.status(500).json(error)
+    }
+})
+
+
+//Delete User
+router.delete('/', async (req, res) => {
+
+    try {
+        const user = await UserModel.findByIdAndDelete(req.user.id)
+        res.status(200).json('Account has been deleted')
+    } catch (err) {
+        console.log(error)
+        res.status(500).json(error)
+    }
+})
 
 module.exports = router
