@@ -8,7 +8,6 @@ require('../auth/auth')
 
 // Register User
 router.route('/register').post( async (req, res) => {
-    const rand = 55
     const firstName = req.body.firstName
     const lastName = req.body.lastName
     const username = req.body.username
