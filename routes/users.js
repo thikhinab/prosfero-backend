@@ -24,10 +24,13 @@ router.route('/register').post( async (req, res) => {
         })
         console.log('User created sucessfully', response)
     } catch (error) {
-        if (error.code = 11000) {
+        if (error.errors) {
+          if (error.errors.username.kind === 'minlength') {
+            return res.status(400).json("Username should be atleast 3 characters long")
+          }
+        } else if (error.code = 11000) {
           res.status('409')
           if (error.keyPattern.username !== undefined) {
-            console.log('I am here')
             return res.json({message: 'Username is already taken'})
           } else if (error.keyPattern.email !== undefined) {
             return res.json({message: 'Email is already taken'})
@@ -35,6 +38,8 @@ router.route('/register').post( async (req, res) => {
         } else {
           throw error
         }
+        
+        
     }
 
     res.status('200').json({message: 'Account successfully created'})
