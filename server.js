@@ -49,6 +49,9 @@ app.use('/api/v1/profile', passport.authenticate('jwt', { session: false }), pro
 const postsRouter = require("./routes/posts");
 app.use("/api/v1/posts", passport.authenticate('jwt', { session: false }), postsRouter);
 
+const requestsRouter = require("./routes/requests");
+app.use("/api/v1/requests", passport.authenticate('jwt', { session: false }), requestsRouter);
+
 app.listen(PORT, () => {
     console.log(`Server is running on port: ${PORT}`)
 })

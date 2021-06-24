@@ -23,6 +23,10 @@ const PostSchema = new mongoose.Schema(
       type: Array,
       required: false,
     },
+    requests: {
+      type: Array,
+      required: false
+    }
   },
   { 
     collections: 'posts',

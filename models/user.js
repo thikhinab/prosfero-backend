@@ -38,9 +38,13 @@ const userSchema = new mongoose.Schema(
             type: String,
             default: "Newbie"
         },
+        noOfPosts: {
+            type: Number,
+            default: 0
+        },
         isAdmin: {
             type: Boolean,
-            dafault: false
+            default: false
         }
 }, {
         collection: 'users',
