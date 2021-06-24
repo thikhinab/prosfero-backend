@@ -11,17 +11,17 @@ const PostSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    photo: {
-      type: String,
-      required: false,
-    },
     userid: {
       type: String,
       required: true,
     },
-    categories: {
-      type: Array,
-      required: false,
+    category: {
+      type: String,
+      required: true,
+    },
+    image: {
+      type: String,
+      required: true
     },
     requests: {
       type: Array,
