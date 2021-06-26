@@ -15,7 +15,7 @@ passport.use(
             try{
                 return done(null, jwtPayload.user)
             } catch (err) {
-                done(error)
+                done(err)
             }
         }
     )
