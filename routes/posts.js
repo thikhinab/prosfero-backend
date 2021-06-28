@@ -144,6 +144,41 @@ router.get("/", async (req, res) => {
   }
 });
 
+// GET LIMITED NUMBER OF POSTS
+router.get("/limited/:limit/:skip", async (req, res) => {
+
+  const skip = parseInt(req.params.skip) || 0
+  const limit = parseInt(req.params.limit) || 0
+
+
+  const getPost = async (post) => {
+    const {userid, title, desc, _id, createdAt, image} = post._doc
+    const user = await User.findById(userid)
+    const {username, ...rest} = user._doc
+    const newPost = {id: _id, title, desc, createdAt, image, username}
+    return newPost
+  }
+
+  try {
+    const posts =  await Post.find()
+                .limit(limit)
+                .skip(skip)
+                .sort('-createdAt')
+
+
+    Promise.all(posts.map(post => {
+      return getPost(post)
+    }
+    )).then(
+      data => res.status(200).json(data)
+    )
+
+  } catch (err) {
+    console.log(err)
+    res.status(500).json(err);
+  }
+});
+
 //MAKE REQUEST 
 router.post("/requests/:id", async (req, res) => {
 
@@ -198,77 +233,6 @@ router.post("/requests/:id", async (req, res) => {
     console.log(err)
     res.status(500).json(err);
   } 
-
-
-/*   try {
-
-    const count = await Request.countDocuments(
-      {
-        postid: postid,
-        userid: userid
-      },
-      (err, count) => {
-        if (err) {
-          console.log(err)
-        } else {
-          return count
-        }
-      }
-      )
-
-
-
-    const postid = req.params.id;
-    const userid = req.user.id;
-    const text = req.body.text || '';
-    console.log('text: ', text)
-    const newRequest = await Request.create({
-      postid,
-      userid,
-      text
-    });
-    const post = await Post.findById(postid);
-
-
-    
-
-      console.log(count) */
-
-/*     function helperFunc(reqId) {
-      const currReq = Request.findById(reqId);
-      if (currReq.userid === req.user.id) {
-        var proceed = false
-      }
-    }
-
-    var proceed = true
-    post.requests.forEach(helperFunc);
-    if (proceed === false) {
-      res.status(401).json("You have already made a request on this post");
-    } */
-
-
-    
-
-/*     if (post.userid !== req.user.id) {
-      try {
-        const updatedPost = await Post.findByIdAndUpdate(
-          req.params.id,
-          {
-            $push: { requests: newRequest.id }
-          },
-          { new: true }
-        );
-        res.status(200).json(updatedPost);
-      } catch (err) {
-        res.status(500).json(err);
-      }
-    } else {
-      res.status(401).json("You cannot request your own post");
-    }
-  } catch (err) {
-    res.status(500).json(err);
-  } */
 });
 
 module.exports = router;
