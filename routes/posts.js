@@ -191,7 +191,7 @@ router.post("/requests/:id", async (req, res) => {
               $push: { requests: newRequest.id }
             },
             { new: true })
-            res.status(200).json(updatedPost);
+          res.status(200).json(updatedPost);
         }
     }
   } catch (err) {
