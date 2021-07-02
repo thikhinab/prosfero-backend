@@ -2,6 +2,7 @@ const router = require("express").Router();
 const User = require('../models/User');
 const Post = require("../models/post");
 const Request = require("../models/request");
+const { request } = require("express");
 
 //CREATE REQUEST
 //ISN"T USED
@@ -25,7 +26,7 @@ const Request = require("../models/request");
 //   }
 // });
 
-//GET REQUESTS DATA FOR A USER
+//GET REQUESTS RECIEVED DATA FOR A USER
 router.get("/", async (req, res) => {
     const userid = req.user.id;
   
@@ -55,6 +56,31 @@ router.get("/", async (req, res) => {
         console.log(err)
     }
   });
+
+//GET REQUESTS MADE DATA FOR A USER
+router.post("/", async (req, res) => {
+  const userid = req.user.id;
+
+  try {
+    const requests = await Request.find({ 'userid': userid })
+    const getData = async (request)=>{
+      const post = await Post.findById(request.postid)
+      const title = post.title
+      const date = request.updatedAt
+      const text = request.text
+      return [title, date, text]
+    }
+
+    const reqsData = []
+    for ( const request of requests) {
+      const data = await getData(request)
+      reqsData.push(data)
+    }
+    res.status(200).json(reqsData)
+  } catch (err) {
+      console.log(err)
+  }
+});
 
 //GET REQUEST
 router.get("/:id", async (req, res) => {
