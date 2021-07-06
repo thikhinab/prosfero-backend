@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const User = require('../models/User');
+const User = require("../models/User");
 const Post = require("../models/post");
 const Request = require("../models/request");
 
@@ -16,28 +16,38 @@ router.post("/", async (req, res) => {
       desc,
       userid,
       category,
-      image
-  });
+      image,
+    });
 
-  const user = await User.findByIdAndUpdate(req.user.id, {
-      $inc: { noOfPosts: 1 }
-}, {new: true});
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      {
+        $inc: { noOfPosts: 1 },
+      },
+      { new: true }
+    );
 
-var level = user.noOfPosts
-if (level > 20) { level = "Generous Giver" } else 
-if (level > 15) { level = "Pro"} else 
-if (level> 10) { level = "Intermediate" } else 
-if (level > 5) { level = "Beginner" } else
-{level = "Newbie"}
-
-const user2 = await User.findByIdAndUpdate(req.user.id, {
-    $set : {
-      achievementLevel: level
-             //{ $cond: [ { $gte: [ "$noOfPosts", 5 ] }, "Pro", "Newbie" ] }
+    var level = user.noOfPosts;
+    if (level > 20) {
+      level = "Generous Giver";
+    } else if (level > 15) {
+      level = "Pro";
+    } else if (level > 10) {
+      level = "Intermediate";
+    } else if (level > 5) {
+      level = "Beginner";
+    } else {
+      level = "Newbie";
     }
-})
 
-/*
+    const user2 = await User.findByIdAndUpdate(req.user.id, {
+      $set: {
+        achievementLevel: level,
+        //{ $cond: [ { $gte: [ "$noOfPosts", 5 ] }, "Pro", "Newbie" ] }
+      },
+    });
+
+    /*
 const user2 = await User.findByIdAndUpdate(req.user.id, 
   { $set : {
     achievementLevel:
@@ -52,13 +62,80 @@ const user2 = await User.findByIdAndUpdate(req.user.id,
   }}
  }, {new: true})*/
 
-  //console.log(user)
-  const { _id } = response._doc
-  res.status(200).json({id: _id});
-
+    //console.log(user)
+    const { _id } = response._doc;
+    res.status(200).json({ id: _id });
   } catch (err) {
     res.status(500).json(err);
     console.log(err);
+  }
+});
+
+router.get("/filter", async (req, res) => {
+  const queryString = req.query.q;
+
+  const skip = parseInt(req.query.skip) || 0;
+  const limit = parseInt(req.query.limit) || 0;
+  const descending = parseInt(req.query.order);
+  let order = "-createdAt";
+  if (descending !== 1) {
+    order = "createdAt";
+  }
+
+  const getPost = async (post) => {
+    const { userid, title, desc, _id, createdAt, category, image } = post._doc;
+    const user = await User.findById(userid);
+    const { username, ...rest } = user._doc;
+    const newPost = {
+      id: _id,
+      title,
+      desc,
+      createdAt,
+      image,
+      category,
+      username,
+    };
+    return newPost;
+  };
+
+  const query = {
+    $or: [
+      {
+        title: {
+          $regex: queryString,
+          $options: "i",
+        },
+      },
+      {
+        desc: {
+          $regex: queryString,
+          $options: "i",
+        },
+      },
+      {
+        category: {
+          $regex: queryString,
+          $options: "i",
+        },
+      },
+    ],
+  };
+
+  if (query) {
+    try {
+      const posts = await Post.find(query).limit(limit).skip(skip).sort(order);
+
+      Promise.all(
+        posts.map((post) => {
+          return getPost(post);
+        })
+      ).then((data) => res.status(200).json(data));
+    } catch (err) {
+      console.log(err);
+      res.status(500).json(err);
+    }
+  } else {
+    res.status(400).json("Bad Request");
   }
 });
 
@@ -87,7 +164,6 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-
 //DELETE POST
 router.delete("/:id", async (req, res) => {
   try {
@@ -95,9 +171,13 @@ router.delete("/:id", async (req, res) => {
     if (post.username === req.body.username) {
       try {
         await post.delete();
-        const user = await User.findByIdAndUpdate(req.user.id, {
-          $inc: { noOfPosts: -1 }
-    }, {new: true});
+        const user = await User.findByIdAndUpdate(
+          req.user.id,
+          {
+            $inc: { noOfPosts: -1 },
+          },
+          { new: true }
+        );
         res.status(200).json("Post has been deleted...");
       } catch (err) {
         res.status(500).json(err);
@@ -110,12 +190,28 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
-
 //GET POST
-router.get("/:id", async (req, res) => {
+router.get("/single/:id", async (req, res) => {
+  const getPost = async (post) => {
+    const { userid, title, desc, _id, category, createdAt, image } = post._doc;
+    const user = await User.findById(userid);
+    const { username, ...rest } = user._doc;
+    const newPost = {
+      id: _id,
+      title,
+      desc,
+      createdAt,
+      image,
+      category,
+      username,
+    };
+    return newPost;
+  };
+
   try {
     const post = await Post.findById(req.params.id);
-    res.status(200).json(post);
+
+    getPost(post).then((data) => res.status(200).json(data));
   } catch (err) {
     res.status(500).json(err);
   }
@@ -146,93 +242,96 @@ router.get("/", async (req, res) => {
 
 // GET LIMITED NUMBER OF POSTS
 router.get("/limited/:limit/:skip", async (req, res) => {
-
-  const skip = parseInt(req.params.skip) || 0
-  const limit = parseInt(req.params.limit) || 0
-
-
-  const getPost = async (post) => {
-    const {userid, title, desc, _id, createdAt, image} = post._doc
-    const user = await User.findById(userid)
-    const {username, ...rest} = user._doc
-    const newPost = {id: _id, title, desc, createdAt, image, username}
-    return newPost
+  const skip = parseInt(req.params.skip) || 0;
+  const limit = parseInt(req.params.limit) || 0;
+  const descending = parseInt(req.query.order);
+  let order = "-createdAt";
+  if (descending !== 1) {
+    order = "createdAt";
   }
 
+  const getPost = async (post) => {
+    const { userid, title, desc, _id, createdAt, category, image } = post._doc;
+    const user = await User.findById(userid);
+    const { username, ...rest } = user._doc;
+    const newPost = {
+      id: _id,
+      title,
+      desc,
+      createdAt,
+      image,
+      category,
+      username,
+    };
+    return newPost;
+  };
+
   try {
-    const posts =  await Post.find()
-                .limit(limit)
-                .skip(skip)
-                .sort('-createdAt')
+    const posts = await Post.find().limit(limit).skip(skip).sort(order);
 
-
-    Promise.all(posts.map(post => {
-      return getPost(post)
-    }
-    )).then(
-      data => res.status(200).json(data)
-    )
-
+    Promise.all(
+      posts.map((post) => {
+        return getPost(post);
+      })
+    ).then((data) => res.status(200).json(data));
   } catch (err) {
-    console.log(err)
+    console.log(err);
     res.status(500).json(err);
   }
 });
 
-//MAKE REQUEST 
+//MAKE REQUEST
 router.post("/requests/:id", async (req, res) => {
-
   const postid = req.params.id;
   const userid = req.user.id;
-  const text = req.body.text || '';
+  const text = req.body.text || "";
 
   try {
-
     const post = await Post.findById(postid);
-    console.log("post: ", postid)
-    console.log("post: ", post)
-    console.log("userid: ", userid)
+    console.log("post: ", postid);
+    console.log("post: ", post);
+    console.log("userid: ", userid);
 
     if (post.userid === req.user.id) {
       res.status(401).json("You cannot request your own post");
     } else {
-
       const count = await Request.countDocuments(
         {
           postid: postid,
-          userid: userid
+          userid: userid,
         },
         (err, count) => {
           if (err) {
-            console.log(err)
+            console.log(err);
           } else {
-            return count
+            return count;
           }
         }
-        )
+      );
 
-        if (count !== 0) {
-          res.status(401).json("You have already made a request on this post");
-        } else {
-          const newRequest = await Request.create({
-            postid,
-            userid,
-            text
-          });
+      if (count !== 0) {
+        res.status(401).json("You have already made a request on this post");
+      } else {
+        const newRequest = await Request.create({
+          postid,
+          userid,
+          text,
+        });
 
-          const updatedPost = await Post.findByIdAndUpdate(
-            req.params.id,
-            {
-              $push: { requests: newRequest.id }
-            },
-            { new: true })
-          res.status(200).json(updatedPost);
-        }
+        const updatedPost = await Post.findByIdAndUpdate(
+          req.params.id,
+          {
+            $push: { requests: newRequest.id },
+          },
+          { new: true }
+        );
+        res.status(200).json(updatedPost);
+      }
     }
   } catch (err) {
-    console.log(err)
+    console.log(err);
     res.status(500).json(err);
-  } 
+  }
 });
 
 module.exports = router;

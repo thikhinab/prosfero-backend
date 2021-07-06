@@ -21,16 +21,19 @@ const PostSchema = new mongoose.Schema(
     },
     image: {
       type: String,
-      required: false
+      required: false,
     },
     requests: {
       type: Array,
-      required: false
-    }
+      required: false,
+    },
   },
-  { 
-    collections: 'posts',
-    timestamps: true }
+  {
+    collections: "posts",
+    timestamps: true,
+  }
 );
 
-module.exports = mongoose.model("Post", PostSchema)
+PostSchema.index({ title: "text", desc: "text", category: "text" });
+
+module.exports = mongoose.model("Post", PostSchema);
