@@ -13,6 +13,11 @@ const RequestSchema = new mongoose.Schema(
     text: {
       type: String,
       required: false,
+    },
+    status: {
+      type: String,
+      required: false,
+      default: ""
     }
   },
   { 

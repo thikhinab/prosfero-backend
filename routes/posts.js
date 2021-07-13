@@ -189,9 +189,9 @@ router.post("/requests/:id", async (req, res) => {
   try {
 
     const post = await Post.findById(postid);
-    console.log("post: ", postid)
-    console.log("post: ", post)
-    console.log("userid: ", userid)
+    // console.log("post: ", postid)
+    // console.log("post: ", post)
+    // console.log("userid: ", userid)
 
     if (post.userid === req.user.id) {
       res.status(401).json("You cannot request your own post");
@@ -217,7 +217,8 @@ router.post("/requests/:id", async (req, res) => {
           const newRequest = await Request.create({
             postid,
             userid,
-            text
+            text,
+
           });
 
           const updatedPost = await Post.findByIdAndUpdate(

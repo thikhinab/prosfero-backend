@@ -26,7 +26,7 @@ const { request } = require("express");
 //   }
 // });
 
-//GET REQUESTS RECIEVED DATA FOR A USER
+//GET INCOMING REQUESTS DATA FOR A USER
 router.get("/", async (req, res) => {
     const userid = req.user.id;
   
@@ -40,10 +40,12 @@ router.get("/", async (req, res) => {
     const getData = async (requestid)=>{
       const requestData = await Request.findById(requestid);
       const userData = await User.findById(requestData.userid);
+      const contact = userData.email
       const username = userData.username;
+      const status = requestData.status
       const postData = await Post.findById(requestData.postid);
       const postTitle = await postData.title
-      return [postTitle, username, requestData.text]
+      return [postTitle, username, requestData.text, requestid, contact, status]
     }
 
     const reqsData = []
@@ -57,7 +59,7 @@ router.get("/", async (req, res) => {
     }
   });
 
-//GET REQUESTS MADE DATA FOR A USER
+//GET OUTGOING REQUESTS DATA FOR A USER
 router.post("/", async (req, res) => {
   const userid = req.user.id;
 
@@ -68,7 +70,10 @@ router.post("/", async (req, res) => {
       const title = post.title
       const date = request.updatedAt
       const text = request.text
-      return [title, date, text]
+      const status = request.status
+      const posterData = await User.findById(post.userid)
+      const contact = posterData.email
+      return [title, date, text, status, contact, post._id, request._id]
     }
 
     const reqsData = []
@@ -76,6 +81,7 @@ router.post("/", async (req, res) => {
       const data = await getData(request)
       reqsData.push(data)
     }
+    console.log(reqsData)
     res.status(200).json(reqsData)
   } catch (err) {
       console.log(err)
@@ -87,6 +93,134 @@ router.get("/:id", async (req, res) => {
   try {
     const request = await Request.findById(req.params.id);
     res.status(200).json(request);
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+
+//APPROVE REQUEST
+router.post("/approve/:id", async (req, res) => {
+  try {
+    const updatedReq = await Request.findByIdAndUpdate(
+      req.params.id,
+      {
+        $set: {status : "approved"},
+      },
+      { new: true }
+    );
+    const getData = async (requestid)=>{
+      const requestData = await Request.findById(requestid);
+      const postData = await Post.findById(requestData.postid);
+      const userData = await User.findById(postData.userid);
+      const username = userData.username;
+      const postTitle = await postData.title
+      return {
+        title : postTitle,
+        username : username,
+        status : "approved",
+        requestid : requestid
+      }
+    }
+    const data = await getData(req.params.id)
+    const reqId = updatedReq.userid
+    const user = await User.findByIdAndUpdate(
+      reqId,
+      {
+        $push: { notifications: data }
+      },
+      { new: true })
+    const email = user.email
+    res.status(200).json(email)
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+
+const declineReq = async (id) => {
+  const updatedReq = await Request.findByIdAndUpdate(
+    id,
+    {
+      $set: {status : "declined"},
+    },
+    { new: true }
+  );
+  const getData = async (requestid)=>{
+    const requestData = await Request.findById(requestid);
+    const postData = await Post.findById(requestData.postid);
+    const userData = await User.findById(postData.userid);
+    const username = userData.username;
+    const postTitle = await postData.title
+    return {
+      title : postTitle,
+      username : username,
+      status : "declined",
+      requestid : requestid
+    }
+  }
+  const data = await getData(id)
+  const reqId = updatedReq.userid
+  const user = await User.findByIdAndUpdate(
+    reqId,
+    {
+      $push: { notifications: data }
+    },
+    { new: true })
+  return data
+}
+
+//DECLINE REQUEST
+router.post("/decline/:id", async (req, res) => {
+  try {
+    const data = await declineReq(req.params.id)
+    res.status(200).json(data)
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+
+//SUCCESSFUL TRANSACTION
+router.post("/success/:id", async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id)
+    // for ( const item of post.requests) {
+
+    //       try {
+    //         const reqs = await declineReq2(item)
+    //         console.log(reqs)
+    //       } catch (err) {
+    //         console.log(err, "you bitch!")
+    //       }
+          
+          
+    // }
+    // for (const item of post.requests) {
+    //   reqs = await Request.findByIdAndDelete(item)
+    // }
+
+    const p1 = async () => Promise.all(post.requests.map(item => 
+      
+      declineReq(item)
+    
+    ))
+    const p2 = async () => Promise.all(post.requests.map(item => Request.findByIdAndDelete(item)))
+
+    p1().then(
+      () => p2().then(async () => {
+        await Post.findByIdAndDelete(req.params.id);
+        res.status(200).json('We did it!')
+    })
+    )
+
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+
+//UNSUCCESSFUL TRANSACTION
+router.post("/fail/:id", async (req, res) => {
+  try {
+    const request = await Request.findByIdAndDelete(req.params.id);
+    res.status(200)
   } catch (err) {
     res.status(500).json(err);
   }
