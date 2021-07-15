@@ -10,6 +10,11 @@ router.post("/", async (req, res) => {
   const userid = req.user.id;
   const category = req.body.category;
   const image = req.body.image;
+  const location = {
+    label: req.body.location.label,
+    lat: Number(req.body.location.lat),
+    lon: Number(req.body.location.lon),
+  };
   try {
     const response = await Post.create({
       title,
@@ -17,6 +22,7 @@ router.post("/", async (req, res) => {
       userid,
       category,
       image,
+      location,
     });
 
     const user = await User.findByIdAndUpdate(
@@ -66,8 +72,8 @@ const user2 = await User.findByIdAndUpdate(req.user.id,
     const { _id } = response._doc;
     res.status(200).json({ id: _id });
   } catch (err) {
-    res.status(500).json(err);
     console.log(err);
+    res.status(500).json(err);
   }
 });
 
@@ -83,7 +89,8 @@ router.get("/filter", async (req, res) => {
   }
 
   const getPost = async (post) => {
-    const { userid, title, desc, _id, createdAt, category, image } = post._doc;
+    const { userid, title, desc, _id, createdAt, category, image, location } =
+      post._doc;
     const user = await User.findById(userid);
     const { username, ...rest } = user._doc;
     const newPost = {
@@ -94,6 +101,7 @@ router.get("/filter", async (req, res) => {
       image,
       category,
       username,
+      location,
     };
     return newPost;
   };
@@ -114,6 +122,12 @@ router.get("/filter", async (req, res) => {
       },
       {
         category: {
+          $regex: queryString,
+          $options: "i",
+        },
+      },
+      {
+        "location.label": {
           $regex: queryString,
           $options: "i",
         },
@@ -193,17 +207,20 @@ router.delete("/:id", async (req, res) => {
 //GET POST
 router.get("/single/:id", async (req, res) => {
   const getPost = async (post) => {
-    const { userid, title, desc, _id, category, createdAt, image } = post._doc;
+    const { userid, title, desc, _id, category, createdAt, image, location } =
+      post._doc;
     const user = await User.findById(userid);
     const { username, ...rest } = user._doc;
     const newPost = {
       id: _id,
+      userid,
       title,
       desc,
       createdAt,
       image,
       category,
       username,
+      location,
     };
     return newPost;
   };
@@ -251,7 +268,8 @@ router.get("/limited/:limit/:skip", async (req, res) => {
   }
 
   const getPost = async (post) => {
-    const { userid, title, desc, _id, createdAt, category, image } = post._doc;
+    const { userid, title, desc, _id, createdAt, category, image, location } =
+      post._doc;
     const user = await User.findById(userid);
     const { username, ...rest } = user._doc;
     const newPost = {
@@ -262,6 +280,7 @@ router.get("/limited/:limit/:skip", async (req, res) => {
       image,
       category,
       username,
+      location,
     };
     return newPost;
   };

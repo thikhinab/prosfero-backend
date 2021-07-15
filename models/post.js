@@ -5,7 +5,6 @@ const PostSchema = new mongoose.Schema(
     title: {
       type: String,
       required: true,
-      unique: true,
     },
     desc: {
       type: String,
@@ -26,6 +25,20 @@ const PostSchema = new mongoose.Schema(
     requests: {
       type: Array,
       required: false,
+    },
+    location: {
+      label: {
+        type: String,
+        required: true,
+      },
+      lat: {
+        type: Number,
+        required: true,
+      },
+      lon: {
+        type: Number,
+        required: true,
+      },
     },
   },
   {
