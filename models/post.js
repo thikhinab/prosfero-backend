@@ -5,7 +5,6 @@ const PostSchema = new mongoose.Schema(
     title: {
       type: String,
       required: true,
-      unique: true,
     },
     desc: {
       type: String,
@@ -21,16 +20,33 @@ const PostSchema = new mongoose.Schema(
     },
     image: {
       type: String,
-      required: false
+      required: false,
     },
     requests: {
       type: Array,
-      required: false
-    }
+      required: false,
+    },
+    location: {
+      label: {
+        type: String,
+        required: true,
+      },
+      lat: {
+        type: Number,
+        required: true,
+      },
+      lon: {
+        type: Number,
+        required: true,
+      },
+    },
   },
-  { 
-    collections: 'posts',
-    timestamps: true }
+  {
+    collections: "posts",
+    timestamps: true,
+  }
 );
 
-module.exports = mongoose.model("Post", PostSchema)
+PostSchema.index({ title: "text", desc: "text", category: "text" });
+
+module.exports = mongoose.model("Post", PostSchema);
