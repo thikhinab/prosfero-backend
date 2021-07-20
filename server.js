@@ -52,6 +52,13 @@ app.use("/api/v1/posts", passport.authenticate('jwt', { session: false }), posts
 const requestsRouter = require("./routes/requests");
 app.use("/api/v1/requests", passport.authenticate('jwt', { session: false }), requestsRouter);
 
+const botRouter = require("./routes/telebots")
+app.use("/api/v1/telebots", passport.authenticate('jwt', { session: false }), botRouter);
+
+const bot = require("./telebot");
+bot.start()
+
+
 app.listen(PORT, () => {
     console.log(`Server is running on port: ${PORT}`)
 })

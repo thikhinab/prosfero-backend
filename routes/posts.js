@@ -2,6 +2,8 @@ const router = require("express").Router();
 const User = require("../models/User");
 const Post = require("../models/post");
 const Request = require("../models/request");
+const Categories = require("../models/botCategories");
+const bot = require("../telebot");
 
 //CREATE POST
 router.post("/", async (req, res) => {
@@ -52,23 +54,24 @@ router.post("/", async (req, res) => {
         //{ $cond: [ { $gte: [ "$noOfPosts", 5 ] }, "Pro", "Newbie" ] }
       },
     });
-
-    /*
-const user2 = await User.findByIdAndUpdate(req.user.id, 
-  { $set : {
-    achievementLevel:
-  {
-    $switch: {
-       branches: [
-          { case: { $gte: [ "$noOfPosts", 5 ] } , then: "Pro" },
-          { case: false, then: "Newbie" }
-       ],
-       default: "Brand New"
-    }
-  }}
- }, {new: true})*/
-
     //console.log(user)
+
+    let userList = await Categories.findOne(
+      { category: category },
+      function (err) {
+        if (err) {
+          console.log(err);
+        }
+      }
+    );
+    userList = userList.users;
+    userList.forEach(function (chatid) {
+      bot.sendMessage(
+        chatid,
+        `A new item has been posted in ${category}. Go check it out at ...`
+      );
+    });
+
     const { _id } = response._doc;
     res.status(200).json({ id: _id });
   } catch (err) {
