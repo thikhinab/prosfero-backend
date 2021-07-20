@@ -197,10 +197,8 @@ router.post("/success/:id", async (req, res) => {
     //   reqs = await Request.findByIdAndDelete(item)
     // }
 
-    const p1 = async () => Promise.all(post.requests.map(item => 
-      
+    const p1 = async () => Promise.all(post.requests.map(item =>  
       declineReq(item)
-    
     ))
     const p2 = async () => Promise.all(post.requests.map(item => Request.findByIdAndDelete(item)))
 

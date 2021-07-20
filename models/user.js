@@ -49,6 +49,9 @@ const userSchema = new mongoose.Schema(
         notifications: {
             type: Array,
             required: false
+        },
+        telebot: {
+            type: String
         }
 }, {
         collection: 'users',
